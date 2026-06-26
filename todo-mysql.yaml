@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-mysql
+  namespace: todo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-mysql
+  template:
+    metadata:
+      labels:
+        app: todo-mysql
+    spec:
+      containers:
+        - name: mysql-container
+          image: mysql:5.7
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - secretRef:
+                name: todo-secret
+            - configMapRef:
+                name: todo-configmap
+          volumeMounts:
+            - name: todo-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: todo-storage
+          persistentVolumeClaim:
+            claimName: todo-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-mysql-service
+  namespace: todo-app
+spec:
+  type: ClusterIP
+  selector:
+    app: todo-mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
